@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Form",
+    "slug": "form",
+    "version": "0.1.0",
+    "scheme": "form",
+    "platforms": [
+      "ios"
+    ],
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.samuelbird.form"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
