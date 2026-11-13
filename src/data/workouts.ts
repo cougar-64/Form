@@ -1,4 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { localDate, assertDate } from './dates.ts';
+import { ensureSchedule, recordRoutineChange } from './schedule.ts';
 
 export const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 export const LOADING = {
@@ -102,12 +104,14 @@ export function validateWorkout(draft: WorkoutDraft) {
   });
 }
 
-export async function saveWorkout(db: WorkoutDatabase, draft: WorkoutDraft): Promise<number> {
+export async function saveWorkout(db: WorkoutDatabase, draft: WorkoutDraft, today = localDate()): Promise<number> {
   const planned = validateWorkout(draft);
+  assertDate(today);
   let versionId = 0;
   await db.withExclusiveTransactionAsync(async (tx) => {
     const current = await tx.getFirstAsync<{ current_version_id: number | null }>('SELECT current_version_id FROM routine_days WHERE weekday = ?', draft.weekday);
     if (!current || current.current_version_id !== draft.versionId) throw new Error('This workout changed elsewhere. Go back and reopen it before saving.');
+    await ensureSchedule(tx, today);
     const result = await tx.runAsync(
       'INSERT INTO routine_versions (weekday, name, warmup, is_rest) VALUES (?, ?, ?, ?)',
       draft.weekday, draft.name.trim(), draft.warmup.trim(), draft.rest ? 1 : 0,
@@ -122,6 +126,7 @@ export async function saveWorkout(db: WorkoutDatabase, draft: WorkoutDraft): Pro
       `, versionId, item.exercise.id, position, item.sets, item.min, item.max, item.weight, item.exercise.unit);
     }
     await tx.runAsync('UPDATE routine_days SET current_version_id = ? WHERE weekday = ?', versionId, draft.weekday);
+    await recordRoutineChange(tx, draft.weekday, versionId, today);
   });
   return versionId;
 }

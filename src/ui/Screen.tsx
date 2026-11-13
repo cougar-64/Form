@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import { createContext, useContext, type PropsWithChildren } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 export function usePalette() {
@@ -8,24 +8,34 @@ export function usePalette() {
     : { background: '#f5f7f2', card: '#ffffff', text: '#162c20', secondary: '#4d6355', accent: '#205c39', border: '#bccbbf' };
 }
 
-export function Screen({ title, subtitle, children }: PropsWithChildren<{ title: string; subtitle: string }>) {
+const TextAlignmentContext = createContext<'left' | 'center'>('left');
+
+export function useTextAlignment() {
+  return useContext(TextAlignmentContext);
+}
+
+export function Screen({ title, subtitle, centered = false, children }: PropsWithChildren<{ title: string; subtitle: string; centered?: boolean }>) {
   const palette = usePalette();
+  const textAlign = centered ? 'center' : 'left';
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: palette.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
-    <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" style={{ backgroundColor: palette.background }} contentContainerStyle={styles.screen}>
-      <Text accessibilityRole="header" style={[styles.title, { color: palette.text }]}>{title}</Text>
-      <Text style={[styles.subtitle, { color: palette.secondary }]}>{subtitle}</Text>
-      {children}
-    </ScrollView>
-    </KeyboardAvoidingView>
+    <TextAlignmentContext.Provider value={textAlign}>
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: palette.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
+        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" style={{ backgroundColor: palette.background }} contentContainerStyle={styles.screen}>
+          <Text accessibilityRole="header" style={[styles.title, { color: palette.text, textAlign }]}>{title}</Text>
+          <Text style={[styles.subtitle, { color: palette.secondary, textAlign }]}>{subtitle}</Text>
+          {children}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </TextAlignmentContext.Provider>
   );
 }
 
 export function Card({ title, children }: PropsWithChildren<{ title: string }>) {
   const palette = usePalette();
+  const textAlign = useTextAlignment();
   return (
     <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
-      <Text accessibilityRole="header" style={[styles.cardTitle, { color: palette.text }]}>{title}</Text>
+      <Text accessibilityRole="header" style={[styles.cardTitle, { color: palette.text, textAlign }]}>{title}</Text>
       {children}
     </View>
   );
@@ -33,7 +43,8 @@ export function Card({ title, children }: PropsWithChildren<{ title: string }>) 
 
 export function Body({ children }: PropsWithChildren) {
   const palette = usePalette();
-  return <Text style={[styles.body, { color: palette.secondary }]}>{children}</Text>;
+  const textAlign = useTextAlignment();
+  return <Text style={[styles.body, { color: palette.secondary, textAlign }]}>{children}</Text>;
 }
 
 const styles = StyleSheet.create({

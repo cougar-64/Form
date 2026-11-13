@@ -13,7 +13,6 @@
     "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
-    "@react-navigation/native": "^7.5.1",
     "expo": "~58.0.24",
     "expo-constants": "~58.0.16",
     "expo-dev-client": "~58.0.19",

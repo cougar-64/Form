@@ -5,7 +5,7 @@ export interface MigrationDatabase {
   withExclusiveTransactionAsync(task: (transaction: MigrationDatabase) => Promise<void>): Promise<void>;
 }
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export async function migrateDatabase(database: MigrationDatabase): Promise<void> {
   await database.execAsync('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
@@ -73,6 +73,28 @@ export async function migrateDatabase(database: MigrationDatabase): Promise<void
           ('Seated cable row', 'machine', 'Back'),
           ('Pull-up', 'bodyweight', 'Back');
         PRAGMA user_version = 2;
+      `);
+    }
+    if (version < 3) {
+      await transaction.execAsync(`
+        CREATE TABLE schedule_config (
+          id INTEGER PRIMARY KEY CHECK(id = 1),
+          start_date TEXT NOT NULL CHECK(length(start_date) = 10)
+        );
+        CREATE TABLE schedule_rules (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          weekday INTEGER NOT NULL REFERENCES routine_days(weekday),
+          effective_from TEXT NOT NULL CHECK(length(effective_from) = 10),
+          routine_version_id INTEGER REFERENCES routine_versions(id),
+          UNIQUE(weekday, effective_from)
+        );
+        CREATE TABLE workout_occurrences (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          scheduled_date TEXT NOT NULL UNIQUE CHECK(length(scheduled_date) = 10),
+          weekday INTEGER NOT NULL REFERENCES routine_days(weekday),
+          routine_version_id INTEGER REFERENCES routine_versions(id)
+        );
+        PRAGMA user_version = 3;
       `);
     }
   });

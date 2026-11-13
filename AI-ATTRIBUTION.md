@@ -17,3 +17,13 @@
 • Tool: Codex (apply_patch, exec_command)
 • Task: Add workout routine sharing to the later-version roadmap as a v2/v3 candidate, outside v1, with the exact scope and sharing method deferred.
 • Review: TODO
+
+2026-11-13: src/data/migrations.ts, src/data/dates.ts (new file), src/data/schedule.ts (new file), src/data/workouts.ts, src/ui/useLocalToday.ts (new file), src/ui/DatedWorkout.tsx (new file), src/app/templates.tsx (new file), src/app/plan/[date].tsx (new file), src/app/(tabs)/calendar.tsx, src/app/(tabs)/index.tsx, src/app/_layout.tsx, src/app/workout/[weekday].tsx, tests/dates.test.ts (new file), tests/schedule.test.ts (new file), package.json, package-lock.json, .expo/types/router.d.ts, README.md, AI-ATTRIBUTION.md
+• Tool: Codex (apply_patch, exec_command)
+• Task: Implement approved milestone 3 with a repeating dated weekly calendar, local schedule start, effective-dated routine rules, preserved past plans, and today's planned workout on Home. Add recurrence/upgrade/date-boundary tests, correct Expo Router navigation-context and discard-guard integration found during native validation, and document the simulator review workflow.
+• Review: TODO
+
+2026-11-13: src/app/(tabs)/index.tsx, src/app/(tabs)/_layout.tsx, src/app/_layout.tsx, src/app/settings.tsx (new file), src/ui/Screen.tsx, src/ui/Fields.tsx, src/ui/DatedWorkout.tsx, .expo/types/router.d.ts, README.md, AI-ATTRIBUTION.md
+• Tool: Codex (apply_patch, exec_command)
+• Task: Simplify Home to today's planned workout with centered text, remove weekly shortcuts, and relocate weight-unit preferences to Settings accessible from My Progress. Keep colors, logos, and broader visual design deferred to milestone 9.
+• Review: TODO

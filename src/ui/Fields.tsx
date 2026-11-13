@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
-import { usePalette } from './Screen';
+import { usePalette, useTextAlignment } from './Screen';
 
 export function Action({ title, onPress, disabled = false, secondary = false }: {
   title: string; onPress: () => void; disabled?: boolean; secondary?: boolean;
@@ -44,7 +44,8 @@ export function Choices<T extends string>({ label, value, options, onChange, dis
 
 export function Message({ text }: { text: string }) {
   const p = usePalette();
-  return <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ color: p.text, fontSize: 17, fontWeight: '600' }}>{text}</Text>;
+  const textAlign = useTextAlignment();
+  return <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ color: p.text, fontSize: 17, fontWeight: '600', textAlign }}>{text}</Text>;
 }
 
 const styles = StyleSheet.create({

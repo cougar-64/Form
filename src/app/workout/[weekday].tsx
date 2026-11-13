@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard, View } from 'react-native';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { usePreventRemove } from '@react-navigation/native';
+import { router, useLocalSearchParams, usePreventRemove } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { readWeightUnit } from '../../data/settings';
 import { createExercise, DAYS, listExercises, loadWorkout, LOADING, saveWorkout, type Exercise, type Loading, type PlannedExercise, type Unit, type WorkoutDraft } from '../../data/workouts';
@@ -12,7 +11,6 @@ export default function WorkoutBuilder() {
   const { weekday } = useLocalSearchParams<{ weekday: string }>();
   const day = Number(weekday);
   const db = useSQLiteContext();
-  const navigation = useNavigation();
   const [draft, setDraft] = useState<WorkoutDraft | null>(null);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -37,14 +35,19 @@ export default function WorkoutBuilder() {
     return () => { active = false; };
   }, [db, day, loadAttempt]);
 
-  usePreventRemove(dirty || busy || Boolean(newName.trim() || muscle.trim()), ({ data }) => {
+  usePreventRemove(dirty || busy || Boolean(newName.trim() || muscle.trim()), ({ repeat }) => {
     if (saving.current) {
       Alert.alert('Save in progress', 'Please wait for the save to finish before leaving.');
       return;
     }
     Alert.alert('Discard workout changes?', 'Your unsaved workout edits will be lost. Exercises already created remain in the library.', [
       { text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: () => navigation.dispatch(data.action) },
+      { text: 'Discard', style: 'destructive', onPress: () => {
+        setDirty(false);
+        setNewName('');
+        setMuscle('');
+        repeat();
+      } },
     ]);
   });
 
@@ -102,7 +105,7 @@ export default function WorkoutBuilder() {
       const versionId = await saveWorkout(db, draft);
       setDraft({ ...draft, versionId });
       setDirty(false);
-      Alert.alert('Workout saved', `${DAYS[day - 1]} is saved. Other weekdays have not changed.`);
+      Alert.alert('Workout saved', `${DAYS[day - 1]} is saved from today onward. Earlier dated plans and other weekdays have not changed.`);
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save your workout. Please try again.'); }
     finally { saving.current = false; setBusy(false); }
   }
@@ -115,7 +118,7 @@ export default function WorkoutBuilder() {
 
   const editable = !busy;
   return (
-    <Screen title={DAYS[day - 1]!} subtitle="Plan what you intend to do. Planned weights never count as recorded lifts or personal records.">
+    <Screen title={DAYS[day - 1]!} subtitle="Edit this weekday’s template from today onward. Planned weights never count as recorded lifts or personal records.">
       <Card title="Workout details">
         <Choices label="Day type" value={draft.rest ? 'rest' : 'workout'} disabled={busy}
           options={[{ value: 'workout', label: 'Workout' }, { value: 'rest', label: 'Rest day' }]}
@@ -173,7 +176,7 @@ export default function WorkoutBuilder() {
       {error ? <Message text={error} /> : null}
       <Body>{dirty ? 'Unsaved changes. Save before leaving; closing the app can lose this workout draft.' : 'No unsaved workout changes.'}</Body>
       <Action title={busy ? 'Saving…' : `Save ${DAYS[day - 1]}`} disabled={busy || !dirty} onPress={() => { void save(); }} />
-      <Action title="Back to your week" secondary disabled={busy} onPress={() => router.back()} />
+      <Action title="Back to templates" secondary disabled={busy} onPress={() => router.back()} />
     </Screen>
   );
 }
