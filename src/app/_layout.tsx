@@ -23,7 +23,10 @@ export default function RootLayout() {
     <ThemeProvider value={dark ? DarkTheme : DefaultTheme}>
       <Suspense fallback={<Screen title="Form" subtitle="Opening your local data…"><ActivityIndicator accessibilityLabel="Loading Form" /></Screen>}>
         <SQLiteProvider databaseName="form.db" onInit={migrateDatabase} useSuspense>
-          <Stack screenOptions={{ headerShown: false }} />
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="workout/[weekday]" options={{ title: 'Workout builder', headerBackTitle: 'Your week' }} />
+          </Stack>
           <StatusBar style={dark ? 'light' : 'dark'} />
         </SQLiteProvider>
       </Suspense>

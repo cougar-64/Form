@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 export function usePalette() {
   const dark = useColorScheme() === 'dark';
@@ -11,11 +11,13 @@ export function usePalette() {
 export function Screen({ title, subtitle, children }: PropsWithChildren<{ title: string; subtitle: string }>) {
   const palette = usePalette();
   return (
-    <ScrollView style={{ backgroundColor: palette.background }} contentContainerStyle={styles.screen}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: palette.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
+    <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" style={{ backgroundColor: palette.background }} contentContainerStyle={styles.screen}>
       <Text accessibilityRole="header" style={[styles.title, { color: palette.text }]}>{title}</Text>
       <Text style={[styles.subtitle, { color: palette.secondary }]}>{subtitle}</Text>
       {children}
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
