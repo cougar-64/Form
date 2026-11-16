@@ -27,6 +27,8 @@ export default function PlannedWorkout() {
       {error && <><Message text="Could not open this date’s plan." /><Action title="Try again" onPress={() => setRetry((v) => v + 1)} /></>}
       {!plan && !error && <Body>Loading…</Body>}
       {plan && <DatedWorkout plan={plan} />}
+      {plan?.sessionId && <Action title={plan.sessionStatus === 'in_progress' ? 'Open workout in progress' : 'View or edit recorded workout'}
+        onPress={() => router.push({ pathname: '/session/[id]', params: { id: plan.sessionId! } })} />}
       <Action title="View calendar" secondary onPress={() => router.replace('/calendar')} />
     </Screen>
   );

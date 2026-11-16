@@ -32,6 +32,8 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="templates" options={{ title: 'Weekly templates' }} />
             <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+            <Stack.Screen name="log/[id]" options={{ title: 'Actual sets', headerBackTitle: 'Workout' }} />
+            <Stack.Screen name="session/[id]" options={{ title: 'Recorded workout', headerBackTitle: 'Plan' }} />
             <Stack.Screen name="plan/[date]" options={{ title: 'Planned workout', headerBackTitle: 'Calendar' }} />
             <Stack.Screen name="workout/[weekday]" options={{ title: 'Workout builder', headerBackTitle: 'Templates' }} />
           </Stack>

@@ -36,6 +36,7 @@ export default function Calendar() {
       {week?.days.map((day) => (
         <Card key={day.date} title={`${DAYS[day.weekday - 1]} · ${displayDate(day.date)}${day.date === today ? ' · Today' : ''}`}>
           <Body>{day.beforeStart ? 'Before schedule began' : day.name === null ? 'Not planned yet' : `${day.name}${day.rest ? ' · Planned rest' : ` · ${day.exercises.length} exercises`}`}</Body>
+          {day.sessionStatus && <Body>{day.sessionStatus === 'completed' ? 'Workout completed' : 'Workout in progress'}</Body>}
           {!day.beforeStart && <Action title={`View plan for ${displayDate(day.date)}`} secondary
             onPress={() => router.push({ pathname: '/plan/[date]', params: { date: day.date } })} />}
         </Card>

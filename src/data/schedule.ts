@@ -10,6 +10,7 @@ export type ScheduledExercise = {
 export type DatedPlan = {
   id: number | null; date: string; weekday: number; versionId: number | null;
   beforeStart: boolean; name: string | null; warmup: string; rest: boolean;
+  sessionId: number | null; sessionStatus: 'in_progress' | 'completed' | null;
   exercises: ScheduledExercise[];
 };
 export type CalendarWeek = { startDate: string; days: DatedPlan[] };
@@ -45,20 +46,20 @@ export async function recordRoutineChange(tx: ScheduleTransaction, day: number, 
       SELECT r.routine_version_id FROM schedule_rules r
       WHERE r.weekday = workout_occurrences.weekday AND r.effective_from <= workout_occurrences.scheduled_date
       ORDER BY r.effective_from DESC LIMIT 1
-    ) WHERE weekday = ? AND scheduled_date >= ?
+    ) WHERE weekday = ? AND scheduled_date >= ? AND plan_locked = 0
   `, day, effective);
 }
 
-async function readPlan(tx: ScheduleTransaction, date: string, today: string, start: string): Promise<DatedPlan> {
+export async function readPlanInTransaction(tx: ScheduleTransaction, date: string, today: string, start: string): Promise<DatedPlan> {
   const day = weekday(date);
-  const empty: DatedPlan = { id: null, date, weekday: day, versionId: null, beforeStart: date < start, name: null, warmup: '', rest: false, exercises: [] };
+  const empty: DatedPlan = { id: null, date, weekday: day, versionId: null, beforeStart: date < start, name: null, warmup: '', rest: false, exercises: [], sessionId: null, sessionStatus: null };
   if (empty.beforeStart) return empty;
-  let occurrence = await tx.getFirstAsync<{ id: number; routine_version_id: number | null }>(
-    'SELECT id, routine_version_id FROM workout_occurrences WHERE scheduled_date = ?', date,
+  let occurrence = await tx.getFirstAsync<{ id: number; routine_version_id: number | null; plan_locked: number }>(
+    'SELECT id, routine_version_id, plan_locked FROM workout_occurrences WHERE scheduled_date = ?', date,
   );
   // Past snapshots stay fixed. Missing past snapshots are reconstructed using
   // the effective-dated rules, rather than today's template pointer.
-  if (!occurrence || date >= today) {
+  if (!occurrence || (date >= today && !occurrence.plan_locked)) {
     const rule = await tx.getFirstAsync<{ routine_version_id: number | null }>(`
       SELECT routine_version_id FROM schedule_rules WHERE weekday = ? AND effective_from <= ?
       ORDER BY effective_from DESC LIMIT 1
@@ -67,8 +68,8 @@ async function readPlan(tx: ScheduleTransaction, date: string, today: string, st
       INSERT INTO workout_occurrences (scheduled_date, weekday, routine_version_id) VALUES (?, ?, ?)
       ON CONFLICT(scheduled_date) DO UPDATE SET routine_version_id = excluded.routine_version_id
     `, date, day, rule?.routine_version_id ?? null);
-    occurrence = await tx.getFirstAsync<{ id: number; routine_version_id: number | null }>(
-      'SELECT id, routine_version_id FROM workout_occurrences WHERE scheduled_date = ?', date,
+    occurrence = await tx.getFirstAsync<{ id: number; routine_version_id: number | null; plan_locked: number }>(
+      'SELECT id, routine_version_id, plan_locked FROM workout_occurrences WHERE scheduled_date = ?', date,
     );
   }
   if (!occurrence) throw new Error('Could not open the dated plan.');
@@ -81,7 +82,8 @@ async function readPlan(tx: ScheduleTransaction, date: string, today: string, st
     SELECT p.exercise_id, e.name, e.loading, e.muscle_group, p.sets, p.reps_min, p.reps_max, p.weight, p.weight_unit
     FROM planned_exercises p JOIN exercises e ON e.id = p.exercise_id WHERE p.version_id = ? ORDER BY p.position
   `, occurrence.routine_version_id);
-  return { ...empty, id: occurrence.id, versionId: occurrence.routine_version_id, name: version.name, warmup: version.warmup, rest: version.is_rest === 1, exercises };
+  const session = await tx.getFirstAsync<{ id: number; status: 'in_progress' | 'completed' }>('SELECT id, status FROM workout_sessions WHERE occurrence_id = ?', occurrence.id);
+  return { ...empty, id: occurrence.id, versionId: occurrence.routine_version_id, name: version.name, warmup: version.warmup, rest: version.is_rest === 1, exercises, sessionId: session?.id ?? null, sessionStatus: session?.status ?? null };
 }
 
 export async function getWeek(db: WorkoutDatabase, containing: string, today = localDate()): Promise<CalendarWeek> {
@@ -91,7 +93,7 @@ export async function getWeek(db: WorkoutDatabase, containing: string, today = l
   await db.withExclusiveTransactionAsync(async (tx) => {
     const startDate = await ensureSchedule(tx, today);
     const days: DatedPlan[] = [];
-    for (const date of dates) days.push(await readPlan(tx, date, today, startDate));
+    for (const date of dates) days.push(await readPlanInTransaction(tx, date, today, startDate));
     result = { startDate, days };
   });
   return result!;
@@ -102,7 +104,7 @@ export async function getDatedPlan(db: WorkoutDatabase, date: string, today = lo
   assertDate(today);
   let result: DatedPlan | undefined;
   await db.withExclusiveTransactionAsync(async (tx) => {
-    result = await readPlan(tx, date, today, await ensureSchedule(tx, today));
+    result = await readPlanInTransaction(tx, date, today, await ensureSchedule(tx, today));
   });
   return result!;
 }

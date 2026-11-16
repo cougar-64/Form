@@ -27,3 +27,13 @@
 • Tool: Codex (apply_patch, exec_command)
 • Task: Simplify Home to today's planned workout with centered text, remove weekly shortcuts, and relocate weight-unit preferences to Settings accessible from My Progress. Keep colors, logos, and broader visual design deferred to milestone 9.
 • Review: TODO
+
+2026-11-13: src/data/migrations.ts, src/data/schedule.ts, src/data/sessions.ts (new file), src/app/(tabs)/index.tsx, src/app/(tabs)/calendar.tsx, src/app/_layout.tsx, src/app/plan/[date].tsx, src/app/log/[id].tsx (new file), src/app/session/[id].tsx (new file), src/ui/DatedWorkout.tsx, src/ui/Fields.tsx, src/ui/Performance.tsx (new file), src/ui/SessionWorkout.tsx (new file), tests/schedule.test.ts, tests/sessions.test.ts (new file), .expo/types/router.d.ts, README.md, AI-ATTRIBUTION.md
+• Tool: Codex (apply_patch, exec_command)
+• Task: Implement approved milestone 4 with explicit Start/Finish, preserved session plans and start dates, actual per-set logging/editing, recoverable separate drafts, previous performance, and session-only additional exercises. Add upgrade/integrity/recovery tests, expose recorded workouts through Calendar, and document simulator review and verification.
+• Review: TODO
+
+2026-11-13: src/ui/ExerciseSetTable.tsx (new file), src/ui/useSetEntries.ts (new file), src/ui/setEntryQueue.ts (new file), src/ui/usePendingSetGuard.ts (new file), src/ui/SessionWorkout.tsx, src/ui/Performance.tsx, src/app/log/[id].tsx, src/app/session/[id].tsx, src/app/(tabs)/index.tsx, src/data/sessions.ts, tests/sessions.test.ts, README.md, AI-ATTRIBUTION.md
+• Tool: Codex (apply_patch, exec_command)
+• Task: Replace the confusing logging panels with compact inline exercise tables containing previous performance, set number, editable weight and editable reps, with one Save sets action per exercise. Preserve recoverable edits and existing logging rules, support unperformed blank slots without losing set numbers, and verify shared-write sequencing and the native layout.
+• Review: TODO

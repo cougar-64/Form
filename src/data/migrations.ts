@@ -5,7 +5,7 @@ export interface MigrationDatabase {
   withExclusiveTransactionAsync(task: (transaction: MigrationDatabase) => Promise<void>): Promise<void>;
 }
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export async function migrateDatabase(database: MigrationDatabase): Promise<void> {
   await database.execAsync('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
@@ -95,6 +95,54 @@ export async function migrateDatabase(database: MigrationDatabase): Promise<void
           routine_version_id INTEGER REFERENCES routine_versions(id)
         );
         PRAGMA user_version = 3;
+      `);
+    }
+    if (version < 4) {
+      await transaction.execAsync(`
+        ALTER TABLE workout_occurrences ADD COLUMN plan_locked INTEGER NOT NULL DEFAULT 0 CHECK(plan_locked IN (0, 1));
+        CREATE TABLE workout_sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          occurrence_id INTEGER NOT NULL UNIQUE REFERENCES workout_occurrences(id),
+          routine_version_id INTEGER NOT NULL REFERENCES routine_versions(id),
+          performed_date TEXT NOT NULL UNIQUE,
+          name TEXT NOT NULL,
+          warmup TEXT NOT NULL,
+          started_at TEXT NOT NULL,
+          started_timezone TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'in_progress' CHECK(status IN ('in_progress', 'completed')),
+          finished_at TEXT,
+          CHECK((status = 'in_progress' AND finished_at IS NULL) OR (status = 'completed' AND finished_at IS NOT NULL))
+        );
+        CREATE UNIQUE INDEX one_active_session ON workout_sessions((1)) WHERE status = 'in_progress';
+        CREATE TABLE session_exercises (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id INTEGER NOT NULL REFERENCES workout_sessions(id),
+          exercise_id INTEGER NOT NULL REFERENCES exercises(id),
+          name TEXT NOT NULL,
+          loading TEXT NOT NULL CHECK(loading IN ('total', 'per_hand', 'machine', 'bodyweight')),
+          muscle_group TEXT NOT NULL,
+          position INTEGER NOT NULL,
+          planned_sets INTEGER,
+          planned_reps_min INTEGER,
+          planned_reps_max INTEGER,
+          planned_weight REAL,
+          planned_unit TEXT NOT NULL CHECK(planned_unit IN ('lb', 'kg')),
+          revision INTEGER NOT NULL DEFAULT 0,
+          draft_json TEXT,
+          UNIQUE(session_id, position)
+        );
+        CREATE INDEX session_exercises_identity ON session_exercises(exercise_id, session_id);
+        CREATE TABLE actual_sets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_exercise_id INTEGER NOT NULL REFERENCES session_exercises(id),
+          client_key TEXT NOT NULL,
+          position INTEGER NOT NULL,
+          weight_milli INTEGER CHECK(weight_milli IS NULL OR (typeof(weight_milli) = 'integer' AND weight_milli BETWEEN 0 AND 100000000)),
+          reps INTEGER NOT NULL CHECK(typeof(reps) = 'integer' AND reps BETWEEN 1 AND 1000),
+          unit TEXT NOT NULL CHECK(unit IN ('lb', 'kg')),
+          UNIQUE(session_exercise_id, client_key)
+        );
+        PRAGMA user_version = 4;
       `);
     }
   });

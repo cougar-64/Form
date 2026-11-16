@@ -15,11 +15,12 @@ export function Action({ title, onPress, disabled = false, secondary = false }: 
 
 export function Field({ label, ...props }: TextInputProps & { label: string }) {
   const p = usePalette();
+  const textAlign = useTextAlignment();
   return (
     <View style={{ gap: 6 }}>
-      <Text style={{ color: p.text, fontSize: 16, fontWeight: '600' }}>{label}</Text>
+      <Text style={{ color: p.text, fontSize: 16, fontWeight: '600', textAlign }}>{label}</Text>
       <TextInput accessibilityLabel={label} placeholderTextColor={p.secondary} {...props}
-        style={[styles.input, { color: p.text, backgroundColor: p.card, borderColor: p.border }, props.multiline && { minHeight: 100, textAlignVertical: 'top' }, props.style]} />
+        style={[styles.input, { color: p.text, backgroundColor: p.card, borderColor: p.border, textAlign }, props.multiline && { minHeight: 100, textAlignVertical: 'top' }, props.style]} />
     </View>
   );
 }
@@ -28,14 +29,15 @@ export function Choices<T extends string>({ label, value, options, onChange, dis
   label: string; value: T; options: readonly { value: T; label: string }[]; onChange: (value: T) => void; disabled?: boolean;
 }) {
   const p = usePalette();
+  const textAlign = useTextAlignment();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: 8 }}>
-      <Text style={{ color: p.text, fontSize: 16, fontWeight: '600' }}>{label}</Text>
+      <Text style={{ color: p.text, fontSize: 16, fontWeight: '600', textAlign }}>{label}</Text>
       {options.map((option) => (
         <Pressable key={option.value} accessibilityRole="radio" accessibilityLabel={option.label}
           accessibilityState={{ checked: value === option.value, disabled }} disabled={disabled} onPress={() => onChange(option.value)}
           style={[styles.button, { borderColor: value === option.value ? p.accent : p.border, backgroundColor: value === option.value ? p.accent : p.card, opacity: disabled ? 0.55 : 1 }]}>
-          <Text style={{ fontSize: 16, color: value === option.value ? p.background : p.text }}>{option.label}</Text>
+          <Text style={{ fontSize: 16, color: value === option.value ? p.background : p.text, textAlign }}>{option.label}</Text>
         </Pressable>
       ))}
     </View>

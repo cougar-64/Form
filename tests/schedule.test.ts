@@ -64,7 +64,7 @@ test('upgrading a version 2 database captures existing templates without changin
     const db = sqliteAdapter(raw);
     await migrateDatabase(db);
     const version = await saveTemplate(db, 1, '2026-11-09', 'Existing Push');
-    raw.exec("DROP TABLE workout_occurrences; DROP TABLE schedule_rules; DROP TABLE schedule_config; UPDATE settings SET value = 'kg' WHERE key = 'weight_unit'; PRAGMA user_version = 2;");
+    raw.exec("DROP TABLE actual_sets; DROP TABLE session_exercises; DROP TABLE workout_sessions; DROP TABLE workout_occurrences; DROP TABLE schedule_rules; DROP TABLE schedule_config; UPDATE settings SET value = 'kg' WHERE key = 'weight_unit'; PRAGMA user_version = 2;");
     await migrateDatabase(db);
     await initializeSchedule(db, '2026-11-13');
     const nextMonday = await getDatedPlan(db, '2026-11-16', '2026-11-13');
